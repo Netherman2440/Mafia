@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mafia.MainPage"
+             >
+
+    
+
+    <StackLayout Padding="10">
+
+        <!-- Label at the top -->
+        <Label Text="This is a "
+               FontSize="24"
+               HorizontalOptions="Center"
+               VerticalOptions="Start" />
+
+            
+        <!-- CollectionView for dynamically generating buttons -->
+        <CollectionView ItemsSource="{Binding Buttons}"  VerticalOptions="FillAndExpand">
+            <CollectionView.ItemsLayout>
+                <!-- Set up a two-column grid -->
+                <GridItemsLayout Orientation="Vertical"
+                                 Span="2" 
+                                 HorizontalItemSpacing="10"
+                                 VerticalItemSpacing="10"
+                                  />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Button Text="{Binding}" HeightRequest="75" />
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+
+        <Label Text="This is a "
+        FontSize="24"
+        HorizontalOptions="Center"
+        VerticalOptions="Start" />
+        <Label Text="This is a "
+        FontSize="24"
+        HorizontalOptions="Center"
+        VerticalOptions="Start" />
+        <Label Text="This is a "
+        FontSize="24"
+        HorizontalOptions="Center"
+        VerticalOptions="Start" />
+
+    </StackLayout>
+
+
+</ContentPage>
