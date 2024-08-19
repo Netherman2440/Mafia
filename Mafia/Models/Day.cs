@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Mafia.Models
 {
-    internal class Day
+    public class Day
     {
         public List<Phase> Phases { get; private set; }
 
@@ -22,9 +22,11 @@ namespace Mafia.Models
         public void NextPhase()
         {
             Index++;
+
             if (Index > Phases.Count - 1)
             {
                 //sum up points
+                Index = Phases.Count - 1;
             }
                
 
@@ -38,6 +40,13 @@ namespace Mafia.Models
                 Index = 0;
 
             CurrentPhase = Phases[Index];
+        }
+
+        public Phase GetPhase(PhaseEnum phaseEnum)
+        {
+            var phase = Phases.Find((p)=> p.PhaseEnum == phaseEnum);
+
+            return phase;
         }
     }
 }

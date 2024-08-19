@@ -7,98 +7,163 @@ using System.Threading.Tasks;
 
 namespace Mafia.Models
 {
-    internal class DayDictionary
+    internal static class DayDictionary
     {
-        public Day GetFirstDay()
+        private static readonly Dictionary<PhaseEnum, Role> _phaseToRoleMap = new Dictionary<PhaseEnum, Role>
+{
+    { PhaseEnum.Amor, Role.Amor },
+    { PhaseEnum.Jester, Role.Jester },
+    { PhaseEnum.Renegat, Role.Renegat },
+    { PhaseEnum.Barman, Role.Barman },
+    { PhaseEnum.Bodyguard, Role.Bodyguard },
+    { PhaseEnum.Dealer, Role.Dealer },
+    { PhaseEnum.Mafia, Role.Mafia },
+    { PhaseEnum.Agent, Role.Agent },
+};
+
+        private static Role GetRole(PhaseEnum phaseEnum)
+        {
+            return _phaseToRoleMap.TryGetValue(phaseEnum, out var role) ? role : Role.None;
+        }
+        public static Day GetFirstDay()
         {
             List<Phase> phases = new()
             {
-                GetPhase(Role.Amor, true),
-                GetPhase(Role.Pair, true),
-                GetPhase(Role.Jester,true),
-                GetPhase(Role.Vendetta,true),
+                GetPhase(PhaseEnum.Jester,true),
+                GetPhase(PhaseEnum.Renegat,true),
+                GetPhase(PhaseEnum.Amor, true),
+                GetPhase(PhaseEnum.Amor),
 
-                GetPhase(Role.Barman, true),
-                GetPhase(Role.Barman),
-                GetPhase(Role.Bodyguard, true),
-                GetPhase(Role.Bodyguard),
-                GetPhase(Role.Dealer, true),
-                GetPhase(Role.Dealer),
-                GetPhase(Role.Mafia, true),
-                GetPhase(Role.Mafia),
-                GetPhase(Role.Agent, true),
-                GetPhase(Role.Agent),
-
+                GetPhase(PhaseEnum.Barman, true),
+                GetPhase(PhaseEnum.Barman),
+                GetPhase(PhaseEnum.Bodyguard, true),
+                GetPhase(PhaseEnum.Bodyguard),
+                GetPhase(PhaseEnum.Dealer, true),
+                GetPhase(PhaseEnum.Dealer),
+                GetPhase(PhaseEnum.Mafia, true),
+                GetPhase(PhaseEnum.Mafia),
+                GetPhase(PhaseEnum.Agent, true),
+                GetPhase(PhaseEnum.Agent),
+                 GetPhase(PhaseEnum.NightSumUp),
+                GetPhase(PhaseEnum.SecondVoting),
+                GetPhase(PhaseEnum.WhoDied),
+                GetPhase(PhaseEnum.WhoVoted),
+                 GetPhase(PhaseEnum.DaySumUp)
             };
 
 
             return new Day(phases);
         }
 
-        public Day GetNextDay()
+        public static Day GetNextDay(bool amorCreatedPair)
         {
             List<Phase> phases = new()
             {
-                GetPhase(Role.Barman),
-                GetPhase(Role.Bodyguard),
-                GetPhase(Role.Dealer),
-                GetPhase(Role.Mafia),
-                GetPhase(Role.Agent),
-
+                GetPhase(PhaseEnum.Barman),
+                GetPhase(PhaseEnum.Bodyguard),
+                GetPhase(PhaseEnum.Dealer),
+                GetPhase(PhaseEnum.Mafia),
+                GetPhase(PhaseEnum.Agent),
+                GetPhase(PhaseEnum.NightSumUp),
+                 GetPhase(PhaseEnum.SecondVoting),
+                GetPhase(PhaseEnum.WhoDied),
+                GetPhase(PhaseEnum.WhoVoted),
+                GetPhase(PhaseEnum.DaySumUp),
             };
+
+            if (!amorCreatedPair)
+            {
+                phases.Insert(0, GetPhase(PhaseEnum.Amor));
+            }
 
 
             return new Day(phases);
         }
 
-        private Phase GetPhase(Role role, bool initialRound = false)
+        private static Phase GetPhase(PhaseEnum phaseEnum, bool initialRound = false)
         {
             Phase phase = new()
             {
-                Name = role.ToString(),
-                phaseRole = role,
+                Name = phaseEnum.ToString(),
+                Role = GetRole(phaseEnum),
                 isInitial = initialRound,
             };
 
 
-            switch (role)
+            switch (phaseEnum)
             {
-                case Role.None:
+                case PhaseEnum.Amor:
+                    phase.Description = initialRound ? "Who is Amor" : "Who is picked by Amor";
+                    phase.limitOfSelections = initialRound ? 1 : 2;
+
                     break;
-                case Role.Citizen:
-                    phase.Description = initialRound ? "Who is citizien" : "Choose 2 persons to be voted out.";
+
+                case PhaseEnum.Jester:
+                    phase.Description = "Who is Jester?";
+                    phase.limitOfSelections = initialRound ? 1 : 0;
+
+
                     break;
-                case Role.Mafia:
-                    phase.Description = initialRound ? "Who is Mafia" : "Choose 1 person to be killed.";
+                case PhaseEnum.Renegat:
+                    phase.Description = "Who is Renegat?";
+                    phase.limitOfSelections = initialRound ? 1 : 0;
+
                     break;
-                case Role.Agent:
-                    phase.Description = initialRound ? "Who is agent" : "Choose 1 people to know his identity.";
+                case PhaseEnum.Barman:
+                    phase.Description = initialRound ? "Who is Barman" : "Who is picked by Barman?";
+                    phase.limitOfSelections = 1;
+
                     break;
-                case Role.Bodyguard:
-                    phase.Description = initialRound ? "Who is bodyguard" : "Choose 1 people to be protected this night.";
+                case PhaseEnum.Bodyguard:
+                    phase.Description = initialRound ? "Who is Bodyguard" : "Who is picked by Bodyguard?";
+                    phase.limitOfSelections = initialRound ? -1 : 1;
+
                     break;
-                case Role.Barman:
-                    phase.Description = initialRound ? "Who is Barman" : "Choose 1 people to be protected this night.";
+                case PhaseEnum.Dealer:
+                    phase.Description = initialRound ? "Who is Dealer" : "Who is picked by Dealer?";
+                    phase.limitOfSelections = initialRound ? 1 : 1;
+
+
                     break;
-                case Role.Dealer:
-                    phase.Description = initialRound ? "Who is Dealer" : "Choose 1 people to be silent next day.";
+                case PhaseEnum.Mafia:
+                    phase.Description = initialRound ? "Who is Mafia" : "Who is picked by Mafia?";
+                    phase.limitOfSelections = initialRound ? -1 : 1;
+
                     break;
-                case Role.Amor:
-                    phase.Description = initialRound ? "Who is Amor" : "";
+                case PhaseEnum.Agent:
+                    phase.Description = initialRound ? "Who is Agent" : "Who is picked by Agent?";
+                    phase.limitOfSelections = initialRound ? -1 : 1;
+
                     break;
-                case Role.Pair:
-                    phase.Description = initialRound ? "Who was picked by Amor" : "";
+                case PhaseEnum.NightSumUp:
+                    phase.Description = "Night points summed up";
+                    phase.limitOfSelections = 0;
+
                     break;
-                case Role.Jester:
-                    phase.Description = initialRound ? "Who is the jester" : "";
+                case PhaseEnum.SecondVoting:
+                    phase.Description = "Who is picked to second voting?";
+                    phase.limitOfSelections = 2;
+
                     break;
-                case Role.Vendetta:
-                    phase.Description = initialRound ? "Who is Vendetta" : "";
+                case PhaseEnum.WhoDied:
+                    phase.Description = "Who died?";
+                    phase.limitOfSelections = -1;
+
+                    break;
+                case PhaseEnum.WhoVoted:
+                    phase.Description = "Who voted for dead person?";
+                    break;
+                case PhaseEnum.DaySumUp:
+                    phase.Description = "Day points summed up";
+                    phase.limitOfSelections = 0;
+
                     break;
             }
+
+
             return phase;
         }
-    }
+    } 
 
     public enum Role
     {
@@ -111,7 +176,24 @@ namespace Mafia.Models
         Barman,
         Dealer,
         Jester, //Suicide
-        Vendetta,
-        Pair    //
+        Renegat,
+
+    }
+
+    public enum PhaseEnum
+    {
+        Amor,
+        Jester,
+        Renegat,
+        Barman,
+        Bodyguard,
+        Dealer,
+        Mafia,
+        Agent,
+        NightSumUp,
+        SecondVoting,
+        WhoDied,
+        WhoVoted,
+        DaySumUp
     }
 }
