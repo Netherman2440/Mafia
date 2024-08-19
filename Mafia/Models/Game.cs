@@ -19,21 +19,23 @@ namespace Mafia.Models
             Days.Add(firstDay);
         }
 
-        public void NextDay()
+        public void SelectPlayers(List<Player> players)
         {
-            DayIndex++;
-
-            if( DayIndex >= Days.Count - 1)
-            {
-                var nextDay = DayDictionary.GetNextDay(amorCreatedPair);
-
-                Days.Add(nextDay);
-            }
+            Days[DayIndex].CurrentPhase.selectedPlayers = players;
         }
 
         public void NextPhase()
         {
-            Days[DayIndex].NextPhase();
+            if (Days[DayIndex].CurrentPhase.PhaseEnum == PhaseEnum.DaySumUp)
+            {
+                SavePoints();
+
+                NextDay();
+                return;
+            }
+
+
+                Days[DayIndex].NextPhase();
 
             if(Days[DayIndex].CurrentPhase.PhaseEnum == PhaseEnum.NightSumUp)
             {
@@ -49,6 +51,29 @@ namespace Mafia.Models
                 //next phase means get next day
             }
         }
+
+        private void NextDay()
+        {
+            DayIndex++;
+
+            if (DayIndex >= Days.Count - 1)
+            {
+                var nextDay = DayDictionary.GetNextDay(amorCreatedPair);
+
+                Days.Add(nextDay);
+            }
+        }
+
+        private void SavePoints()
+        {
+            foreach(var player in Players)
+            {
+                player.pointHistory[DayIndex] = player.currentDayPoints;
+
+                player.currentDayPoints = 0;
+            }
+        }
+
         private void SumUpNight()
         {
             foreach (Phase currentPhase in Days[DayIndex].Phases)
@@ -59,6 +84,17 @@ namespace Mafia.Models
                 }
             }
 
+            PointsGiver pointsGiver = new(Days[DayIndex]);
+
+            pointsGiver.GiveNightPoints(ref Players);
+
+            ApllyNightEffects();
+
+
+        }
+
+        private void ApllyNightEffects()
+        {
             var amorPhase = Days[DayIndex].GetPhase(PhaseEnum.Amor);
             var bodyguardPhase = Days[DayIndex].GetPhase(PhaseEnum.Bodyguard);
             var dealerPhase = Days[DayIndex].GetPhase(PhaseEnum.Dealer);
@@ -89,160 +125,99 @@ namespace Mafia.Models
                 {
                     foreach (var player in mafiaPhase.selectedPlayers)
                     {
-                        player.IsAlive = false;
+                        PlayerNightDied(player);
                     }
                 }
             }
-
         }
 
+        
 
         private void SumUpDay()
         {
-            foreach (Phase currentPhase in Days[DayIndex].Phases)
+            PointsGiver pointsGiver = new(Days[DayIndex]);
+
+            pointsGiver.GiveDayPoints(ref Players);
+
+            //who died 
+            PlayerDayDied(Days[DayIndex].GetPhase(PhaseEnum.WhoDied).selectedPlayers[0]);
+        }
+
+        private void PlayerNightDied(Player player)
+        {
+            player.IsAlive = false;
+
+            if (player.IsPaired)
             {
-                if (currentPhase.isInitial) continue;
+                //Find his pair
+                var secondPlayer = Players.Find((p) => p.IsPaired && p != player);
 
-                else
-                {
-                    switch (currentPhase.PhaseEnum)
-                    {
-                        case PhaseEnum.Amor:
-                            AmorPoints();
-                            break;
-                        case PhaseEnum.Jester:
+                secondPlayer.IsAlive = false;
 
-                            break;
-                        case PhaseEnum.Renegat:
-                            RenegatPoints(currentPhase.selectedPlayers, Days[DayIndex].GetPhase(PhaseEnum.WhoDied));    //points for killing man selected during night
-                            break;
-                        case PhaseEnum.Barman:
-                            BarmanPoints(currentPhase.selectedPlayers); //points for selecting mafia
-                            break;
-                        case PhaseEnum.Bodyguard:
-                            BodyguardPoints(currentPhase, Days[DayIndex].GetPhase(PhaseEnum.Dealer), Days[DayIndex].GetPhase(PhaseEnum.Mafia)); //points for saving from mafia and dealer
-                            break;
-                        case PhaseEnum.Dealer:
-                            DealerPoints(currentPhase.selectedPlayers, Days[DayIndex].GetPhase(PhaseEnum.Bodyguard));   //points for giving drugs to mafia, agent, or bodyguard
-                            break;
-                        case PhaseEnum.Mafia:
-                            MafiaPoints(currentPhase.selectedPlayers, Days[DayIndex].GetPhase(PhaseEnum.Bodyguard));    //points for killing agent and bodyguard
-                            break;
-                        case PhaseEnum.Agent:
-                            AgentPoints(currentPhase.selectedPlayers);  //points for selecting mafia
-                            break;
-                        case PhaseEnum.NightSumUp:
-                            break;
-                        case PhaseEnum.SecondVoting:
-                            SecondVotingPoints(currentPhase.selectedPlayers);
-                            break;
-                        case PhaseEnum.WhoDied:
-                            PlayerDied(currentPhase.selectedPlayers);
-                            break;
-                        case PhaseEnum.WhoVoted:
-                            VotingForPoints(currentPhase.selectedPlayers, Days[DayIndex].GetPhase(PhaseEnum.WhoDied));
-                            break;
-                        case PhaseEnum.DaySumUp:
-                            break;
-                    }
-                }
+                //check if she wasnt protected
+            }
+            else if (player.Role == Role.Jester)
+            {
+
+                PointsGiver pointsGiver = new();
+
+                player.currentDayPoints = pointsGiver.JesterPoints(Players.Count, DayIndex);
             }
 
-            //moreover
-
-            JesterPoints();
-
-            
-
-        }
-
-
-
-
-        private void VotingForPoints(List<Player> selectedPlayers, Phase whoDiedPhase)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void SecondVotingPoints(List<Player> selectedPlayers)
-        {
-            foreach(Player player in selectedPlayers)
+            if (ShouldGameEnded())
             {
-                player.secondVotingCount++;
-            }
+                PointsGiver pointsGiver = new();
 
-            //todo give points
-
-        }
-
-        private void DealerPoints(List<Player> selectedPlayers, Phase bodyguardPhase)
-        {
-            if(!BodyguardProtected(bodyguardPhase, selectedPlayers))
-            {
-                foreach (Player player in selectedPlayers)
-                {
-                    //give points if it is mafia, agent or bodyguard
-                }
+                pointsGiver.GiveWinPoints(ref Players);
             }
         }
 
-        private void RenegatPoints(List<Player> selectedPlayers, Phase whoDiedPhase)
+        private bool ShouldGameEnded()
         {
-            foreach(var player in selectedPlayers)
+            var mafia = GetAlivePlayers(Role.Mafia);
+
+            var city = GetAlivePlayers(new List<Role>() { Role.Citizen, Role.Barman, Role.Agent, Role.Bodyguard });
+
+            var neutral = GetAlivePlayers(new List<Role>() { Role.Renegat, Role.Jester, Role.Amor, Role.Dealer });
+
+            return  mafia.Count == 0 || mafia.Count > city.Count + neutral.Count;
+        }
+
+        private void PlayerDayDied(Player player)
+        {
+            player.IsAlive = false;
+
+            if (player.IsPaired)
             {
-                if (whoDiedPhase.selectedPlayers.Contains(player))
-                {
-                    //give points
-                }
+                //Find his pair
+                var secondPlayer = Players.Find((p) => p.IsPaired && p != player);
+
+                secondPlayer.IsAlive = false;
+
+                //check if she wasnt protected
+            }
+            else if (player.Role == Role.Jester)
+            {
+                PointsGiver pointsGiver = new();
+
+                player.currentDayPoints = pointsGiver.JesterPoints(Players.Count, DayIndex);
+
+                //jester wins
+                player.currentDayPoints += 5;
+                return;
+            }
+
+            if (ShouldGameEnded())
+            {
+                PointsGiver pointsGiver = new();
+
+                pointsGiver.GiveWinPoints(ref Players);
+
+                //show results
             }
         }
 
-        private void JesterPoints()
-        {
-            //give -1 to jester
-            throw new NotImplementedException();
-
-        }
-
-        private void AmorPoints()
-        {
-            //give 1 additional point if pair is alive
-            throw new NotImplementedException();
-        }
-        private void MafiaPoints(List<Player> selectedPlayers, Phase bodyguardPhase)
-        {
-            if(!BodyguardProtected(bodyguardPhase, selectedPlayers))
-            {
-                //give points if this was agent or bodyguard
-            }
-        }
-
-        private void WhoVotedPoints(List<Player> selectedPlayers, Phase phase)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void PlayerDied(List<Player> selectedPlayers)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        private void AgentPoints(List<Player> selectedPlayers)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void BodyguardPoints(Phase currentPhase, Phase phase1, Phase phase2)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void BarmanPoints(List<Player> selectedPlayers)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         private void SetRole(Phase phase)
         {
             foreach(var player in phase.selectedPlayers)
@@ -263,6 +238,25 @@ namespace Mafia.Models
             }
 
             return bodyguardProtected;
+        }
+
+        private List<Player> GetAlivePlayers(Role role)
+        {
+            return GetAlivePlayers(new List<Role> { role});
+        }
+
+        private List<Player> GetAlivePlayers(List<Role> roles)
+        {
+            var list = new List<Player>();
+
+            foreach ( var role in roles)
+            {
+                var results = Players.FindAll((p) => p.IsAlive && p.Role == role);
+
+                list.AddRange(results);
+            }
+
+            return list;
         }
     }
 }
