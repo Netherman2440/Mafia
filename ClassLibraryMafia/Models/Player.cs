@@ -15,5 +15,14 @@
 
         public List<int> pointHistory = new();
 
+        public Player()
+        {
+            
+        }
+        public Player(string name)
+        {
+            this.Name = name;
+            IsAlive = true;
+        }
     }
 }

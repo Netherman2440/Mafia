@@ -14,9 +14,9 @@ namespace Mafia.Models
 
         private bool amorCreatedPair = false;
 
-        public void StartGame()
+        public void StartGame(bool rolesAreSet)
         {
-            var firstDay = DayDictionary.GetFirstDay();
+            var firstDay = rolesAreSet ? DayDictionary.GetNextDay(false) : DayDictionary.GetFirstDay();
 
             Days.Add(firstDay);
         }
