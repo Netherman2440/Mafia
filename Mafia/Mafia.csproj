@@ -70,6 +70,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Models\" />
 	  <Folder Include="Platforms\NewFolder\" />
 	</ItemGroup>
 

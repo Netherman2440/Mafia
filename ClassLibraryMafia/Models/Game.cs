@@ -2,9 +2,11 @@
 
 namespace Mafia.Models
 {
-    internal class Game
+    public class Game
     {
         public int DayIndex;
+
+        public Day CurrentDay => Days[DayIndex];
 
         public List<Day> Days = new();
 
@@ -21,12 +23,12 @@ namespace Mafia.Models
 
         public void SelectPlayers(List<Player> players)
         {
-            Days[DayIndex].CurrentPhase.selectedPlayers = players;
+            CurrentDay.CurrentPhase.selectedPlayers = players;
         }
 
         public void NextPhase()
         {
-            if (Days[DayIndex].CurrentPhase.PhaseEnum == PhaseEnum.DaySumUp)
+            if (CurrentDay.CurrentPhase.PhaseEnum == PhaseEnum.DaySumUp)
             {
                 SavePoints();
 
@@ -35,15 +37,15 @@ namespace Mafia.Models
             }
 
 
-                Days[DayIndex].NextPhase();
+                CurrentDay.NextPhase();
 
-            if(Days[DayIndex].CurrentPhase.PhaseEnum == PhaseEnum.NightSumUp)
+            if(CurrentDay.CurrentPhase.PhaseEnum == PhaseEnum.NightSumUp)
             {
                 //sum up night
                 SumUpNight();
             }
 
-            if (Days[DayIndex].CurrentPhase.PhaseEnum == PhaseEnum.DaySumUp)
+            if (CurrentDay.CurrentPhase.PhaseEnum == PhaseEnum.DaySumUp)
             {
                 //sum up day
                 SumUpDay();
@@ -76,7 +78,7 @@ namespace Mafia.Models
 
         private void SumUpNight()
         {
-            foreach (Phase currentPhase in Days[DayIndex].Phases)
+            foreach (Phase currentPhase in CurrentDay.Phases)
             {
                 if (currentPhase.isInitial)
                 {
@@ -95,10 +97,10 @@ namespace Mafia.Models
 
         private void ApllyNightEffects()
         {
-            var amorPhase = Days[DayIndex].GetPhase(PhaseEnum.Amor);
-            var bodyguardPhase = Days[DayIndex].GetPhase(PhaseEnum.Bodyguard);
-            var dealerPhase = Days[DayIndex].GetPhase(PhaseEnum.Dealer);
-            var mafiaPhase = Days[DayIndex].GetPhase(PhaseEnum.Mafia);
+            var amorPhase = CurrentDay.GetPhase(PhaseEnum.Amor);
+            var bodyguardPhase = CurrentDay.GetPhase(PhaseEnum.Bodyguard);
+            var dealerPhase = CurrentDay.GetPhase(PhaseEnum.Dealer);
+            var mafiaPhase = CurrentDay.GetPhase(PhaseEnum.Mafia);
 
             if (amorPhase != null && !amorPhase.isInitial && amorPhase.selectedPlayers.Count > 0)    //Amor phase result
             {
@@ -140,7 +142,9 @@ namespace Mafia.Models
             pointsGiver.GiveDayPoints(ref Players);
 
             //who died 
-            PlayerDayDied(Days[DayIndex].GetPhase(PhaseEnum.WhoDied).selectedPlayers[0]);
+
+            if(CurrentDay.GetPhase(PhaseEnum.WhoDied).selectedPlayers.Count > 0)
+            PlayerDayDied(CurrentDay.GetPhase(PhaseEnum.WhoDied).selectedPlayers[0]);
         }
 
         private void PlayerNightDied(Player player)

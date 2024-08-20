@@ -17,6 +17,8 @@ namespace Mafia.Models
         public Day(List<Phase> phases)
         {
                 this.Phases = phases;
+
+            CurrentPhase = Phases[0];
         }
 
         public void NextPhase()
