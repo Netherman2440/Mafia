@@ -5,9 +5,12 @@
         private List<Player> players;
         private Day day;
 
+        private int winningPoints = 5;
+        private int livingPoints = 1;
+        private int pairPoints = 1;
         public PointsGiver()
         {
-                
+
         }
         public PointsGiver(Day day)
         {
@@ -16,35 +19,37 @@
 
         public void GiveWinPoints(ref List<Player> players)
         {
+            this.players = players;
+
             var mafia = GetAlivePlayers(Role.Mafia);
 
             var city = GetAlivePlayers(new List<Role>() { Role.Citizen, Role.Barman, Role.Agent, Role.Bodyguard });
 
             var neutral = GetAlivePlayers(new List<Role>() { Role.Renegat, Role.Jester, Role.Amor, Role.Dealer });
-            var stayAliveNeutral = GetAlivePlayers(new List<Role>() { Role.Renegat,  Role.Amor, Role.Dealer });
+            var stayAliveNeutral = GetAlivePlayers(new List<Role>() { Role.Renegat, Role.Amor, Role.Dealer });
 
             if (mafia.Count == 0)
             {
                 //City wins
 
-                foreach(var player in city)
+                foreach (var player in city)
                 {
-                    if(!(player.IsPaired && player.IsAlive))
-                    player.currentDayPoints += 5;
+                    if (!(player.IsPaired && player.IsAlive))
+                        player.currentDayPoints += winningPoints;
                 }
 
                 //neutral wins
-                foreach(var player in stayAliveNeutral)
+                foreach (var player in stayAliveNeutral)
                 {
                     if (!(player.IsPaired && player.IsAlive))
-                        player.currentDayPoints += 5;
+                        player.currentDayPoints += winningPoints;
                 }
 
                 //pair wins
                 foreach (var player in players)
                 {
-                    if(  player.IsPaired && player.IsAlive) 
-                        player.currentDayPoints += 5;
+                    if (player.IsPaired && player.IsAlive)
+                        player.currentDayPoints += winningPoints;
                 }
 
             }
@@ -56,21 +61,21 @@
                 foreach (var player in mafia)
                 {
                     if (!(player.IsPaired && player.IsAlive))
-                        player.currentDayPoints += 5;
+                        player.currentDayPoints += winningPoints;
                 }
 
                 //neutral wins
                 foreach (var player in stayAliveNeutral)
                 {
                     if (!(player.IsPaired && player.IsAlive))
-                        player.currentDayPoints += 5;
+                        player.currentDayPoints += winningPoints;
                 }
 
                 //pair wins
                 foreach (var player in players)
                 {
                     if (player.IsPaired && player.IsAlive)
-                        player.currentDayPoints += 5;
+                        player.currentDayPoints += winningPoints;
                 }
             }
         }
@@ -138,24 +143,27 @@
             AmorPoints();
         }
 
-        public int JesterPoints(int playersCount, int dayIndex)
+        public int JesterPoints(int playersCount, int dayIndex, bool diedDuringDay)
         {
             int jesterPoints = playersCount / 2 - dayIndex;
+
+            if (diedDuringDay)
+                jesterPoints += winningPoints;
 
             return jesterPoints;
         }
 
         private void PointsForLiving()
         {
-            foreach(var player in players)
+            foreach (var player in players)
             {
                 if (player.IsAlive)
                 {
-                    player.currentDayPoints += 1;
+                    player.currentDayPoints += livingPoints;
 
                     if (player.IsPaired)
                     {
-                        player.currentDayPoints += 1;
+                        player.currentDayPoints += pairPoints;
                     }
                 }
             }
@@ -167,35 +175,41 @@
             Player deadMan = whoDiedPhase.selectedPlayers[0];
 
             var citiziens = GetAlivePlayers(Role.Citizen, selectedPlayers);
-            var otherCity = GetAlivePlayers(new List<Role> { Role.Agent, Role.Bodyguard, Role.Barman }, selectedPlayers);
+            var otherCity = GetAlivePlayers(new List<Role> { Role.Citizen, Role.Agent, Role.Bodyguard, Role.Barman }, selectedPlayers);
 
+            var city = GetAlivePlayers(new List<Role> { Role.Agent, Role.Bodyguard, Role.Barman }, selectedPlayers);
 
             var mafia = GetAlivePlayers(Role.Mafia, selectedPlayers);
-            
+
             var neutrals = GetAlivePlayers(new List<Role> { Role.Dealer, Role.Amor, Role.Jester, Role.Renegat }, selectedPlayers);
+
+            neutrals.AddRange(selectedPlayers.Where(x => x.IsPaired));
 
             if (deadMan == null) return;
 
-            if(deadMan.Role == Role.Mafia)
+            if (deadMan.Role == Role.Mafia)
             {
-                // 3 points for obyvatels
-                GiveRolePoints(citiziens, 3);
 
-                GiveRolePoints(otherCity, 1);
+                GiveRolePoints(citiziens);  //1,2,3
 
-                GiveRolePoints(neutrals, 1);
+                VotingPoints(city, 1);    //every time 1
+
+                VotingPoints(neutrals, 1);    //every time 1
             }
 
-            if(deadMan.Role == Role.Citizen)
+            if (deadMan.Role == Role.Citizen)
             {
-                GivePoints(neutrals, 1);
-                GivePoints(mafia, 1);
+                VotingPoints(neutrals, 1);    //every time 1
+
+                VotingPoints(mafia, 1);   //every time 1
             }
-            
-            if(deadMan.Role == Role.Agent || deadMan.Role == Role.Bodyguard)
+
+            if (deadMan.Role == Role.Agent || deadMan.Role == Role.Bodyguard)
             {
-                GivePoints(neutrals, 1);
-                GivePoints(mafia, 3);
+                VotingPoints(neutrals, 1);    //every time 1
+
+                GiveRolePoints(mafia);  //1,2,3
+
             }
 
 
@@ -220,9 +234,9 @@
             {
                 foreach (Player player in selectedPlayers)
                 {
-                    if (player.Role == Role.Mafia || player.Role == Role.Agent || player.Role == Role.Bodyguard)  //dealer picked mafia, agent or bodyguard
+                    if (player.Role == Role.Mafia || player.Role == Role.Agent)  //dealer picked mafia, agent 
                     {
-                        GiveRolePoints(dealers, 3);
+                        GiveRolePoints(dealers);
                     }
                 }
             }
@@ -238,7 +252,7 @@
                 if (whoDiedPhase.selectedPlayers.Contains(player))
                 {
                     //give points
-                    GiveRolePoints(renegats, 3);
+                    GiveRolePoints(renegats);
                 }
             }
         }
@@ -259,7 +273,7 @@
             }
 
             if (pairAlive)
-                GiveRolePoints(amors, 1);
+                VotingPoints(amors, 1);
         }
         private void MafiaPoints(List<Player> selectedPlayers, Phase bodyguardPhase)    //3 points for agent or bodyguard
         {
@@ -271,9 +285,9 @@
 
                 foreach (var player in selectedPlayers)
                 {
-                    if (player.Role == Role.Agent || player.Role == Role.Bodyguard)
+                    if (player.Role == Role.Agent || player.Role == Role.Bodyguard || player.Role == Role.Barman)
                     {
-                        GiveRolePoints(mafia, 3);
+                        GiveRolePoints(mafia);
                     }
                 }
 
@@ -288,7 +302,7 @@
             {
                 if (player.Role == Role.Mafia)
                 {
-                    GiveRolePoints(agents, 3);
+                    GiveRolePoints(agents);
                 }
             }
         }
@@ -299,15 +313,15 @@
 
             foreach (var player in bodyguardPhase.selectedPlayers)
             {
-                if (dealerPhase.selectedPlayers.Contains(player))
+                if (dealerPhase != null && dealerPhase.selectedPlayers.Contains(player))
                 {
-                    GiveRolePoints(bodyguards, 3);
+                    GiveRolePoints(bodyguards);
                     break;
                 }
 
                 if (mafiaPhase.selectedPlayers.Contains(player))
                 {
-                    GiveRolePoints(bodyguards, 3);
+                    GiveRolePoints(bodyguards);
                     break;
                 }
             }
@@ -323,7 +337,7 @@
                 if (player.Role == Role.Mafia)
                 {
 
-                    GiveRolePoints(barmans, 3);
+                    GiveRolePoints(barmans);
                 }
             }
         }
@@ -331,6 +345,8 @@
         private bool BodyguardProtected(Phase bodyguardPhase, List<Player> currentSelection)
         {
             bool bodyguardProtected = false;
+            if (bodyguardPhase == null) return bodyguardProtected;
+
             foreach (var player in currentSelection)
             {
                 if (bodyguardPhase.selectedPlayers.Contains(player))
@@ -342,12 +358,33 @@
             return bodyguardProtected;
         }
 
-        private void GiveRolePoints(List<Player> players, int v)
+        private void GiveRolePoints(List<Player> selectedPlayers)
+        {
+            foreach (var player in selectedPlayers)
+            {
+                player.succesRoleActivites++;
+
+                if (player.IsPaired) continue;
+
+
+                if (player.succesRoleActivites == 1)
+                    player.currentDayPoints += 1;
+
+                else if (player.succesRoleActivites == 2)
+                    player.currentDayPoints += 2;
+
+                else if (player.succesRoleActivites >= 3)
+                    player.currentDayPoints += 3;
+
+            }
+        }
+
+        private void VotingPoints(List<Player> players, int v)
         {
             foreach (Player player in players)
             {
-                if(!player.IsPaired)
-                player.currentDayPoints += v;
+                if (!player.IsPaired)
+                    player.currentDayPoints += v;
             }
         }
 
@@ -355,7 +392,7 @@
         {
             foreach (Player player in players)
             {
-                    player.currentDayPoints += v;
+                player.currentDayPoints += v;
             }
         }
 
@@ -368,13 +405,13 @@
         private List<Player> GetPlayers(Role role, List<Player> players)
         {
             var result = players.FindAll((p) => p.Role == role);
-
+            if (result.Any()) return new();
             return result;
         }
 
         private List<Player> GetAlivePlayers(Role role)
         {
-            return GetPlayers(role, players);
+            return GetAlivePlayers(new List<Role> { role }, players);
         }
 
         private List<Player> GetAlivePlayers(List<Role> roles)
@@ -393,7 +430,7 @@
 
             foreach (var role in roles)
             {
-                var results = Players.FindAll((p) => p.IsAlive && p.Role == role);
+                var results = Players.FindAll((p) => p.IsAlive && p.Role == role && !p.IsPaired);
 
                 list.AddRange(results);
             }

@@ -25,8 +25,8 @@
                 },
                 new Player()
                 {
-                    Name = "Renegat",
-                    Role = Role.Renegat
+                    Name = "Renegat_Citizien",
+                    Role = Role.Citizen
                 },
                 new Player()
                 {
@@ -75,8 +75,8 @@
                 },
                 new Player()
                 {
-                    Name = "Mafia_5",
-                    Role = Role.Mafia
+                    Name =   "Citizen",
+                    Role =   Role.Citizen
                 },
                 new Player()
                 {

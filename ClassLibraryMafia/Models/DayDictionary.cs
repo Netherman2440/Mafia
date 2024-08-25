@@ -19,11 +19,25 @@ namespace Mafia.Models
     { PhaseEnum.Dealer, Role.Dealer },
     { PhaseEnum.Mafia, Role.Mafia },
     { PhaseEnum.Agent, Role.Agent },
+
+ 
 };
+        /*
+    { PhaseEnum.NightSumUp, Role.None },
+    { PhaseEnum.SecondVoting, Role.None },
+    { PhaseEnum.WhoDied, Role.None },
+    { PhaseEnum.WhoVoted, Role.None },
+    { PhaseEnum.DaySumUp, Role.None }
+         */
 
         private static Role GetRole(PhaseEnum phaseEnum)
         {
             return _phaseToRoleMap.TryGetValue(phaseEnum, out var role) ? role : Role.None;
+        }
+
+        private static PhaseEnum GetPhaseEnum(Role role)
+        {
+            return _phaseToRoleMap.FirstOrDefault(x => x.Value == role).Key;
         }
         public static Day GetFirstDay()
         {
@@ -51,6 +65,36 @@ namespace Mafia.Models
                  GetPhase(PhaseEnum.DaySumUp)
             };
 
+
+            return new Day(phases);
+        }
+
+        public static Day GetNextDay(List<Role> livingRoles, bool amorCreatedPair)
+        {
+            List<Phase> phases = new();
+
+            if(!amorCreatedPair) phases.Add(GetPhase(PhaseEnum.Amor));
+
+            List<Role> sortedRoles = livingRoles.OrderBy(role => role).ToList();
+
+            foreach (Role role in sortedRoles)
+            {
+                if (role is Role.Amor or  Role.Jester or Role.Citizen) continue;
+
+                Phase phase = GetPhase(GetPhaseEnum(role));
+
+                phases.Add(phase);
+            }
+
+            List<Phase> obligatory = new()
+            {
+                GetPhase(PhaseEnum.NightSumUp),
+                 GetPhase(PhaseEnum.SecondVoting),
+                GetPhase(PhaseEnum.WhoDied),
+                GetPhase(PhaseEnum.WhoVoted),
+                GetPhase(PhaseEnum.DaySumUp),
+            };
+            phases.AddRange(obligatory);
 
             return new Day(phases);
         }
@@ -87,6 +131,7 @@ namespace Mafia.Models
                 Name = phaseEnum.ToString(),
                 Role = GetRole(phaseEnum),
                 isInitial = initialRound,
+                PhaseEnum = phaseEnum,
             };
 
 
@@ -168,15 +213,15 @@ namespace Mafia.Models
     public enum Role
     {
         None,
-        Citizen,
-        Mafia,
-        Agent,
-        Bodyguard,
-        Amor,
-        Barman,
-        Dealer,
         Jester, //Suicide
         Renegat,
+        Amor,
+        Barman,
+        Bodyguard,
+        Dealer,
+        Mafia,
+        Agent,
+        Citizen,
 
     }
 

@@ -46,9 +46,8 @@ namespace Mafia.Models
 
         public Phase GetPhase(PhaseEnum phaseEnum)
         {
-            var phase = Phases.Find((p)=> p.PhaseEnum == phaseEnum);
+            return Phases.FirstOrDefault(p => p.PhaseEnum == phaseEnum);
 
-            return phase;
         }
     }
 }
