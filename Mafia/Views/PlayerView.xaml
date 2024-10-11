@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Mafia.Views.PlayerView">
+    <VerticalStackLayout>
+        <Frame HeightRequest="100" 
+               BackgroundColor="{Binding BackgroundColor}"
+               CornerRadius="10"
+               Padding="10">
+            <StackLayout>
+                <!-- Pierwsza linia tekstu: Player.Name -->
+                <Label Text="{Binding Player.Name}" 
+                       FontAttributes="Bold" 
+                       FontSize="16" 
+                       HorizontalOptions="Center" 
+                       TextColor="White"/>
+                <!-- Druga linia tekstu: Player.Score -->
+                <Label Text="{Binding Player.Score, StringFormat='Score: {0}'}" 
+                       FontSize="14" 
+                       HorizontalOptions="Center"
+                       TextColor="White"/>
+                <!-- Trzecia linia tekstu: Player.Role -->
+                <Label Text="{Binding Player.Role, StringFormat='Role: {0}'}" 
+                       FontSize="14" 
+                       HorizontalOptions="Center"
+                       TextColor="White"/>
+            </StackLayout>
+            <Frame.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ToggleSelectionCommand}" />
+            </Frame.GestureRecognizers>
+        </Frame>
+    </VerticalStackLayout>
+</ContentView>

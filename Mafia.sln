@@ -4,12 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mafia", "Mafia\Mafia.csproj", "{1D8B7BED-DFAF-4051-B0D2-A622B0B29792}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D4B971E7-E5CC-4751-B670-424787D9E634} = {D4B971E7-E5CC-4751-B670-424787D9E634}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WPFMafia", "WPFMafia\WPFMafia.csproj", "{674A2921-C7F3-43D5-BEF3-582B8355E04B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleAppMafia", "ConsoleAppMafia\ConsoleAppMafia.csproj", "{878279A6-20E6-4280-B030-ECA330BB22F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibraryMafia", "ClassLibraryMafia\ClassLibraryMafia.csproj", "{D4B971E7-E5CC-4751-B670-424787D9E634}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClassLibraryMafia", "ClassLibraryMafia\ClassLibraryMafia.csproj", "{D4B971E7-E5CC-4751-B670-424787D9E634}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

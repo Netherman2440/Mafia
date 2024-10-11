@@ -172,6 +172,9 @@
 
         private void VotingForPoints(List<Player> selectedPlayers, Phase whoDiedPhase)
         {
+            if (whoDiedPhase.selectedPlayers.Count == 0) return;
+
+
             Player deadMan = whoDiedPhase.selectedPlayers[0];
 
             var citiziens = GetAlivePlayers(Role.Citizen, selectedPlayers);

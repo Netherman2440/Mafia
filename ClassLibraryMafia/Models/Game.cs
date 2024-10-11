@@ -1,5 +1,7 @@
 ﻿
 
+using System.Numerics;
+
 namespace Mafia.Models
 {
     public class Game
@@ -31,6 +33,21 @@ namespace Mafia.Models
         public void SelectPlayers(List<Player> players)
         {
             CurrentDay.CurrentPhase.selectedPlayers = players;
+        }
+
+        public void PrevPhase()
+        {
+            if (CurrentDay.CurrentPhase.PhaseEnum == PhaseEnum.Amor)
+            {
+                PrevDay();
+
+                return;
+            }
+
+            //if return points;
+
+
+            CurrentDay.PrevPhase();
         }
 
         public void NextPhase()
@@ -72,6 +89,21 @@ namespace Mafia.Models
             }
         }
 
+        private void PrevDay()
+        {
+            if (DayIndex == 0) return;
+
+            DayIndex--;
+
+            foreach (var player in Players)
+            {
+                player.currentDayPoints = player.pointHistory[DayIndex];
+
+                player.pointHistory[DayIndex] = 0;
+            }
+
+        }
+
         private void SavePoints()
         {
             foreach (var player in Players)
@@ -79,6 +111,8 @@ namespace Mafia.Models
                 player.pointHistory[DayIndex] = player.currentDayPoints;
 
                 player.currentDayPoints = 0;
+
+                player.Score = player.pointHistory.Sum();
             }
         }
 
@@ -156,7 +190,7 @@ namespace Mafia.Models
 
         private void SumUpDay()
         {
-            PointsGiver pointsGiver = new(Days[DayIndex]);
+            PointsGiver pointsGiver = new(CurrentDay);
 
             pointsGiver.GiveDayPoints(ref Players);
 
